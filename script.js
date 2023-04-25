@@ -3,8 +3,8 @@ window.addEventListener('load', ()=>{
 
     resize(); // Resizes the canvas once the window loads
     document.addEventListener('mousedown', startPainting);
-    document.addEventListener('mouseup', stopPainting);
-    document.addEventListener('mousemove', sketch);
+    // document.addEventListener('mouseup', stopPainting);
+    // document.addEventListener('mousemove', sketch);
     window.addEventListener('resize', resize);
 });
 
@@ -19,10 +19,11 @@ function resize() {
   ctx.canvas.height = window.innerHeight - 100;
 }
 
-// Stores the initial position of the cursor
-let coord = {x:0 , y:0};
 
+let coord = {x:0 , y:0};
 let paint = false;
+const positions = [];
+const velocities = [];
 
 // Updates the coordianates of the cursor when
 // an event e is triggered to the coordinates where
@@ -35,9 +36,22 @@ function getPosition(event) {
 // The following functions toggle the flag to start
 // and stop drawing
 function startPainting(event) {
-  paint = true;
+  // paint = true;
+  // getPosition(event);
+  // ctx.beginPath();
+  //
   getPosition(event);
+  // ctx.arc(coord.x, coord.y, 50, 0, Math.PI * 2, true);
+  //
+  // ctx.stroke();
+
+  positions.push([coord.x, coord.y]);
+  velocities.push([0,0]);
 }
+
+var clear = (e) => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+};
 
 function stopPainting() {
   paint = false;
@@ -49,26 +63,47 @@ function sketch(event) {
   ctx.beginPath();
 
   ctx.lineWidth = 5;
-
-  // Sets the end of the lines drawn
-  // to a round shape.
   ctx.lineCap = 'round';
-
   ctx.strokeStyle = 'black';
 
-  // The cursor to start drawing
-  // moves to this coordinate
   ctx.moveTo(coord.x, coord.y);
 
-  // The position of the cursor
-  // gets updated as we move the
-  // mouse around.
   getPosition(event);
 
-  // A line is traced from start
-  // coordinate to this coordinate
   ctx.lineTo(coord.x , coord.y);
 
-  // Draws the line.
   ctx.stroke();
 }
+
+
+///////////////////////////////////
+///////// ANIMATION STUFF /////////
+///////////////////////////////////
+
+var requestID;
+var grav = 5;
+
+var step = () => {
+  // window.cancelAnimationFrame(requestID);
+
+  clear();
+
+  for (let i = 0; i < velocities.length; i++) {
+    ctx.beginPath();
+    ctx.arc(positions[i][0], positions[i][1], 50, 0, Math.PI * 2, true);
+    ctx.stroke();
+
+    // apply gravity. MOVE TO METHOD LATER
+    velocities[i][1] += grav;
+    positions[i][1] += velocities[i][1];
+
+    //floor collision           //note the radius here is 50
+    if (positions[i][1] >= canvas.height - 50) {
+      positions[i][1] = canvas.height - 50;
+    }
+  }
+
+  requestID = window.requestAnimationFrame(step);
+};
+
+window.requestAnimationFrame(step);
