@@ -17,10 +17,9 @@ function resize() {
 let coord = {x:0 , y:0};
 const positions = [];
 const velocities = [];
-const masses = [];
 const radii = [];      // CURRENTLY UNUSED
 var requestID;
-var grav = 0.5;
+var grav = .5;
 
 // Update methods
 function getPosition(event) {
@@ -35,7 +34,6 @@ function addObject(event) {
 
   // MOVING COLLISION TESTS
   positions.push([ctx.canvas.width - coord.x, coord.y]);
-  masses.push(50);
   if (coord.x < ctx.canvas.width / 2) {
     velocities.push([5,0]);
     velocities.push([-3,0]);
@@ -85,30 +83,28 @@ var getNorm = (v) => {
 ///////////////////////////////////
 
 var step = () => {
-  window.cancelAnimationFrame(requestID);
+  // window.cancelAnimationFrame(requestID);
 
   clear();
 
   for (let i = 0; i < positions.length; i++) {
     var collided = false;
-    // apply gravity. MOVE TO METHOD LATER?
+    // apply gravity. MOVE TO METHOD LATER
     velocities[i][1] += grav;
+    // positions[i][1] += velocities[i][1];
 
     var v = velocities[i];
     var n = getNorm(v);
-    var distancePercent = 1;
+    var distance = Infinity;
 
     // collide with other stuff
     for (let j = 0; j < positions.length; j++) {
       if (i != j) {
-        var relativeV = [v[0] - velocities[j][0], v[1] - velocities[j][1]];
-        // console.log(relativeV);
-        var nRel = getNorm(relativeV);
         var c = [positions[j][0] - positions[i][0], positions[j][1] - positions[i][1]];
 
-        if (dot(relativeV,c) > 0) { // check direction
+        if (dot(v,c) > 0) { // check direction
           // proj c on v
-          var d = dot(nRel,c);
+          var d = dot(n,c);
           // closest approach
           var magcSQ = getSqMag(c);
           var f = magcSQ - d * d;
@@ -118,12 +114,11 @@ var step = () => {
             // distance to be travelled to collide
             var t = 100 * 100 - f;
             var newDistance = d - Math.sqrt(t);
-
-            if (newDistance * newDistance <= getSqMag(relativeV)) { // check distance travelable
+            if (newDistance * newDistance <= getSqMag(v)) { // check distance travelable
               // distance = newDistance;
               // positions[i][0] += n[0] * distance;
               // positions[i][1] += n[1] * distance;
-              distancePercent = Math.min(distancePercent, newDistance * newDistance / getSqMag(relativeV));
+              distance = Math.min(distance, newDistance)
               collided = true;
             }
           }
@@ -136,9 +131,8 @@ var step = () => {
       positions[i][1] += velocities[i][1];
     }
     else {
-      positions[i][0] += velocities[i][0] * Math.sqrt(distancePercent);
-      positions[i][1] += velocities[i][1] * Math.sqrt(distancePercent);
-      // console.log(distancePercent);
+      positions[i][0] += n[0] * distance;
+      positions[i][1] += n[1] * distance;
     }
 
     // floor collision          // note the radius here is 50
