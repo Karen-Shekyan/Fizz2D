@@ -19,7 +19,7 @@ const positions = [];
 const velocities = [];
 const radii = [];      // CURRENTLY UNUSED
 var requestID;
-var grav = .5;
+var grav = 5;
 
 // Update methods
 function getPosition(event) {
@@ -84,10 +84,11 @@ var step = () => {
 
     var v = velocities[i];
     var n = getNorm(v);
-    var distance = Infinity;
 
     // collide with other stuff
     for (let j = 0; j < positions.length; j++) {
+      var distance = Infinity;
+
       if (i != j) {
         var c = [positions[j][0] - positions[i][0], positions[j][1] - positions[i][1]];
 
@@ -104,11 +105,12 @@ var step = () => {
             var t = 100 * 100 - f;
             var newDistance = d - Math.sqrt(t);
             if (newDistance * newDistance <= getSqMag(v)) { // check distance travelable
-              // distance = newDistance;
-              // positions[i][0] += n[0] * distance;
-              // positions[i][1] += n[1] * distance;
-              distance = Math.min(distance, newDistance)
+              distance = newDistance;
+              positions[i][0] += n[0] * distance;
+              positions[i][1] += n[1] * distance;
+              // distance = Math.min(distance, newDistance)
               collided = true;
+              // console.log(collided);
             }
           }
         }
@@ -119,17 +121,15 @@ var step = () => {
       positions[i][0] += velocities[i][0];
       positions[i][1] += velocities[i][1];
     }
-    else {
-      positions[i][0] += n[0] * distance;
-      positions[i][1] += n[1] * distance;
-    }
+    // else {
+    //   positions[i][0] += n[0] * distance;
+    //   positions[i][1] += n[1] * distance; // UHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+    // }
 
     // floor collision          // note the radius here is 50
     if (positions[i][1] >= canvas.height - 50) {
       positions[i][1] = canvas.height - 50;
     }
-    // console.log(distance);
-
 
     ctx.beginPath();
     ctx.arc(positions[i][0], positions[i][1], 50, 0, Math.PI * 2, true);
