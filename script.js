@@ -36,6 +36,8 @@ function addObject(event) {
   // MOVING COLLISION TESTS
   positions.push([ctx.canvas.width - coord.x, coord.y]);
   masses.push(50);
+
+  masses.push(50);
   if (coord.x < ctx.canvas.width / 2) {
     velocities.push([5,0]);
     velocities.push([-3,0]);
@@ -90,6 +92,7 @@ var step = () => {
   clear();
 
   for (let i = 0; i < positions.length; i++) {
+    console.log(velocities[i]);
     var collided = false;
     // apply gravity. MOVE TO METHOD LATER?
     velocities[i][1] += grav;
@@ -97,6 +100,8 @@ var step = () => {
     var v = velocities[i];
     var n = getNorm(v);
     var distancePercent = 1;
+
+    var collidedWith = -1;
 
     // collide with other stuff
     for (let j = 0; j < positions.length; j++) {
@@ -123,22 +128,44 @@ var step = () => {
               // distance = newDistance;
               // positions[i][0] += n[0] * distance;
               // positions[i][1] += n[1] * distance;
-              distancePercent = Math.min(distancePercent, newDistance * newDistance / getSqMag(relativeV));
+              if (newDistance * newDistance / getSqMag(relativeV) < distancePercent) {
+                distancePercent = newDistance * newDistance / getSqMag(relativeV);
+                collidedWith = j;
+                console.log(collidedWith);
+              }
+              // distancePercent = Math.min(distancePercent, newDistance * newDistance / getSqMag(relativeV));
               collided = true;
             }
           }
         }
       }
     }
+    // console.log(masses);
+
 
     if (!collided) {
       positions[i][0] += velocities[i][0];
       positions[i][1] += velocities[i][1];
     }
     else {
-      positions[i][0] += velocities[i][0] * Math.sqrt(distancePercent);
-      positions[i][1] += velocities[i][1] * Math.sqrt(distancePercent);
+      // positions[i][0] += velocities[i][0] * Math.sqrt(distancePercent);
+      // positions[i][1] += velocities[i][1] * Math.sqrt(distancePercent);
       // console.log(distancePercent);
+      // console.log(collidedWith);
+      var centersV = [positions[collidedWith][0] - positions[i][0], positions[collidedWith][1] - positions[i][1]];
+      // var centersV = [positions[i][0] - positions[collidedWith][0], positions[i][1] - positions[collidedWith][1]];
+      centersV = getNorm(centersV);
+
+      var a1 = dot(velocities[i], centersV);
+      var a2 = dot(velocities[collidedWith], centersV);
+      var optimizedP = 2.0 * (a1 - a2) / (masses[i] + masses[collidedWith]);
+
+      velocities[i] = [velocities[i][0] - optimizedP * masses[collidedWith] * centersV[0],
+                       velocities[i][1] - optimizedP * masses[collidedWith] * centersV[1]];
+
+      positions[i][0] += velocities[i][0];
+      positions[i][1] += velocities[i][1];
+      // console.log(mass);
     }
 
     // floor collision          // note the radius here is 50
